@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arduino Weather Monitor</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+    #output { background: #000; border: 1px solid #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
+    canvas { background: #fff; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Serial Monitor Output</h1>
+  <div id="output"></div>
+
+  <h2>Live Graphs</h2>
+  <canvas id="humidityChart" width="600" height="200"></canvas>
+  <canvas id="dhtTempChart" width="600" height="200"></canvas>
+  <canvas id="bmpTempChart" width="600" height="200"></canvas>
+  <canvas id="pressureChart" width="600" height="200"></canvas>
+  <canvas id="altitudeChart" width="600" height="200"></canvas>
+  <canvas id="rainChart" width="600" height="200"></canvas>
+
+  <script>
+    const socket = io();
+    const output = document.getElementById('output');
+
+    const createChart = (id, label, color) => {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label,
+            data: [],
+            borderColor: color,
+            borderWidth: 2,
+            fill: false,
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          animation: false,
+          scales: {
+            x: { title: { display: true, text: 'Time' } },
+            y: { title: { display: true, text: label } }
+          }
+        }
+      });
+    };
+
+    const charts = {
+      humidity: createChart('humidityChart', 'Humidity (%)', 'blue'),
+      dhtTemp: createChart('dhtTempChart', 'DHT Temperature (°C)', 'red'),
+      bmpTemp: createChart('bmpTempChart', 'BMP180 Temperature (°C)', 'orange'),
+      pressure: createChart('pressureChart', 'Pressure (hPa)', 'green'),
+      altitude: createChart('altitudeChart', 'Altitude (m)', 'purple'),
+      rain: createChart('rainChart', 'Rain Sensor Value', 'gray'),
+    };
+
+    const updateChart = (chart, value) => {
+      const now = new Date().toLocaleTimeString();
+      const data = chart.data;
+      data.labels.push(now);
+      data.datasets[0].data.push(value);
+      if (data.labels.length > 20) {
+        data.labels.shift();
+        data.datasets[0].data.shift();
+      }
+      chart.update();
+    };
+
+    socket.on('serialData', (data) => {
+      output.innerHTML += data + '<br>';
+      output.scrollTop = output.scrollHeight;
+    });
+
+    socket.on('humidity', val => updateChart(charts.humidity, val));
+    socket.on('dhtTemp', val => updateChart(charts.dhtTemp, val));
+    socket.on('bmpTemp', val => updateChart(charts.bmpTemp, val));
+    socket.on('pressure', val => updateChart(charts.pressure, val));
+    socket.on('altitude', val => updateChart(charts.altitude, val));
+    socket.on('rain', val => updateChart(charts.rain, val));
+  </script>
+</body>
+</html>
