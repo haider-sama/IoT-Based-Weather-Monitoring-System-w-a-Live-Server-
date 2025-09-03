@@ -45,12 +45,17 @@ This project fulfills the requirements of a **Complex Engineering Problem (CEP)*
 ## 📂 Project Structure
 
 📁 WebServer/
+<br />
 ├── server.js # Node.js server implementation
+<br />
 └── other node files...
 
 📁 iot_based_weather_monitoring/
+<br />
 ├── proteus_simulation/ # Proteus design files for circuit simulation
+<br />
 └── sketch_iot_based_monitoring/
+<br />
 └── sketch.ino # Arduino implementation
 
 ## 🚀 How to Run
